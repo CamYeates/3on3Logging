@@ -1,0 +1,21 @@
+{
+  "name": "3on3-logging",
+  "version": "0.1.0",
+  "private": true,
+  "description": "3-on-3 basketball game logging app (Expo + Supabase, offline-first)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile": "npm run start --workspace apps/mobile",
+    "test": "npm run test --workspace packages/shared && npm run test --workspace apps/mobile",
+    "test:shared": "npm run test --workspace packages/shared",
+    "lint": "npm run lint --workspace apps/mobile",
+    "typecheck": "npm run typecheck --workspace packages/shared && npm run typecheck --workspace apps/mobile"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.3.3"
+  }
+}

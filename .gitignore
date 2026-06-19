@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Expo
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+ios/
+android/
+
+# Metro
+.metro-health-check*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Supabase
+supabase/.branches
+supabase/.temp
+
+# Build output
+*.app
+*.ipa

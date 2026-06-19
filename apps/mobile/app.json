@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "3on3 Logging",
+    "slug": "3on3-logging",
+    "version": "0.1.0",
+    "orientation": "landscape",
+    "scheme": "threeonthree",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "requireFullScreen": true,
+      "bundleIdentifier": "com.example.threeonthree",
+      "infoPlist": {
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.example.threeonthree"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  }
+}
