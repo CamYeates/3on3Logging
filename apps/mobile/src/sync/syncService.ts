@@ -53,7 +53,6 @@ export async function syncPendingEvents(): Promise<SyncResult> {
     };
   }
 
-  const db = await getDb();
   const items = await getPendingSyncItems();
   let pushed = 0;
   let failed = 0;
@@ -182,7 +181,7 @@ async function pushGameRow(row: GameRow): Promise<void> {
 }
 
 /** Explicit single-game push (used by the "Sync now" button on Summary). */
-export async function pushGameToCloud(gameId: string): Promise<SyncResult> {
+export async function pushGameToCloud(_gameId: string): Promise<SyncResult> {
   // Simply ensures everything queued is flushed. The queue already contains the
   // game, its roster and its events.
   return syncPendingEvents();
@@ -236,8 +235,93 @@ export async function pullGamesFromCloud(): Promise<{ pulled: number }> {
         new Date().toISOString(),
       ],
     );
+    await pullRosterForGame(g.id as string);
+    await pullEventsForGame(g.id as string);
     pulled += 1;
   }
 
   return { pulled };
+}
+
+/** Hydrate the local roster (game_players + denormalized name) for a game. */
+async function pullRosterForGame(gameId: string): Promise<void> {
+  if (!supabase) return;
+  const db = await getDb();
+
+  const { data: gps, error } = await supabase
+    .from('game_players')
+    .select('id, game_id, player_id, team_id, active, players(name, jersey_number)')
+    .eq('game_id', gameId);
+  if (error) throw error;
+
+  for (const gp of (gps ?? []) as Array<Record<string, unknown>>) {
+    const player = (gp.players ?? {}) as { name?: string; jersey_number?: string };
+    await db.runAsync(
+      `INSERT OR REPLACE INTO local_game_players
+         (id, game_id, player_id, team_id, name, jersey_number, active, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        gp.id as string,
+        gp.game_id as string,
+        gp.player_id as string,
+        gp.team_id as string,
+        player.name ?? 'Player',
+        player.jersey_number ?? null,
+        gp.active ? 1 : 0,
+        new Date().toISOString(),
+      ],
+    );
+  }
+}
+
+/**
+ * Hydrate the local event log for a game. Insert-if-absent keyed by
+ * client_event_id so locally-created events are never clobbered.
+ *
+ * TODO(multi-device): sequence numbers come straight from the server here. If
+ * this device also logged events offline, the local max+1 numbering can overlap
+ * with pulled numbers. Reconciliation (renumber by server_created_at, or adopt
+ * server sequence as authoritative) is deferred — see eventsRepo TODO.
+ */
+async function pullEventsForGame(gameId: string): Promise<void> {
+  if (!supabase) return;
+  const db = await getDb();
+
+  const { data: events, error } = await supabase
+    .from('game_events')
+    .select('*')
+    .eq('game_id', gameId)
+    .order('sequence_number', { ascending: true });
+  if (error) throw error;
+
+  for (const e of (events ?? []) as Array<Record<string, unknown>>) {
+    await db.runAsync(
+      `INSERT OR IGNORE INTO local_game_events
+         (id, game_id, sequence_number, client_event_id, device_id, team_id,
+          player_id, related_player_id, action_type, point_value, result,
+          metadata_json, created_by, local_created_at, server_created_at,
+          synced_at, deleted_at, undo_of_event_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        e.id as string,
+        e.game_id as string,
+        e.sequence_number as number,
+        e.client_event_id as string,
+        e.device_id as string,
+        (e.team_id as string) ?? null,
+        (e.player_id as string) ?? null,
+        (e.related_player_id as string) ?? null,
+        e.action_type as string,
+        (e.point_value as number) ?? null,
+        (e.result as string) ?? null,
+        JSON.stringify(e.metadata ?? {}),
+        (e.created_by as string) ?? null,
+        (e.local_created_at as string) ?? (e.server_created_at as string),
+        (e.server_created_at as string) ?? null,
+        new Date().toISOString(),
+        (e.deleted_at as string) ?? null,
+        (e.undo_of_event_id as string) ?? null,
+      ],
+    );
+  }
 }

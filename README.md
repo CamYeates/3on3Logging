@@ -220,12 +220,18 @@ needs to change.
   `eventsRepo.ts` and `syncService.ts`.
 - **Auth is minimal.** RLS allows any authenticated user; there’s no org/team
   membership enforcement yet.
-- **Sync is push-centric.** `pullGamesFromCloud()` hydrates games but does not
-  yet pull remote *events* into the local log (scaffolded; see TODO).
-- **No realtime.** Sync is manual ("Sync Now") or on app focus.
+- **No realtime.** Sync is manual ("Sync Now") or on app focus; `pullGamesFromCloud()`
+  hydrates games, rosters, and the event log but there is no live subscription.
 - **Export is JSON via the share sheet** (no CSV/PDF yet).
 
 ---
+
+## Taking it to production
+
+See **[PRODUCTION.md](./PRODUCTION.md)** for the full, ordered checklist:
+app identity & EAS, hardened RLS + auth, multi-device conflict resolution,
+realtime sync, secrets/environments, CI/CD, observability, pre-launch
+verification, and a "definition of done".
 
 ## Future roadmap
 
